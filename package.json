@@ -1,0 +1,17 @@
+{
+  "name": "sahoot",
+  "version": "1.0.0",
+  "description": "Live quiz competition - Kahoot-style real-time multiplayer quiz",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4"
+  },
+  "keywords": ["quiz", "multiplayer", "live", "competition", "socket.io"],
+  "author": "azelinc",
+  "license": "MIT"
+}

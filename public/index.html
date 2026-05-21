@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahoot - Live Quiz Competition</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.landing {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;text-align:center;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  color:white;padding:2rem;
+}
+.landing h1 {
+  font-size:4rem;margin:0 0 1rem;background:linear-gradient(90deg,#e94560,#ff6b6b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:none;
+}
+.landing p {font-size:1.25rem;color:#b8c5d6;margin-bottom:2rem;}
+.buttons {display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;}
+.btn {
+  display:inline-block;padding:1rem 2.5rem;border-radius:12px;font-size:1.1rem;
+  font-weight:700;text-decoration:none;transition:transform 0.2s,box-shadow 0.2s;cursor:pointer;border:none;
+}
+.btn:hover {transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,0.3);}
+.btn-primary {background:linear-gradient(90deg,#e94560,#ff6b6b);color:white;}
+.btn-secondary {background:white;color:#1a1a2e;}
+.features {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;
+  margin-top:3rem;max-width:900px;width:100%;
+}
+.feature {
+  background:rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;
+  backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);
+}
+.feature h3 {margin:0 0 0.5rem;color:#ff6b6b;font-size:1.1rem;}
+.feature p {margin:0;font-size:0.95rem;color:#b8c5d6;}
+</style>
+</head>
+<body>
+<div class="landing">
+  <h1>SAHOOT</h1>
+  <p>Live quiz competition for seminars, forums & events.<br>No login. Just a PIN and a phone.</p>
+  <div class="buttons">
+    <a href="/host/" class="btn btn-primary">Host a Game</a>
+    <a href="/player/" class="btn btn-secondary">Join a Game</a>
+  </div>
+  <div class="features">
+    <div class="feature"><h3>Real-time</h3><p>Socket-powered instant sync across all devices.</p></div>
+    <div class="feature"><h3>Speed Scoring</h3><p>Faster correct answers = more points. Pure adrenaline.</p></div>
+    <div class="feature"><h3>Leaderboard</h3><p>Live ranking after every question. Build the hype.</p></div>
+    <div class="feature"><h3>Zero Setup</h3><p>One click to host. Players join with a 6-digit PIN.</p></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sahoot - Play</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.player-bg {
+  min-height:100vh; background:#1a1a2e; color:white; display:flex;
+  flex-direction:column; align-items:center; justify-content:center; padding:1.5rem;
+}
+.join-box { width:100%; max-width:360px; text-align:center; }
+.join-box h1 { font-size:2.5rem; margin:0 0 0.5rem; }
+.join-box p { color:#b8c5d6; margin-bottom:2rem; }
+.input-group { margin-bottom:1rem; text-align:left; }
+.input-group label { display:block; font-size:0.85rem; color:#b8c5d6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.05em; }
+input[type="text"] {
+  width:100%; padding:1rem; border-radius:10px; border:none; font-size:1.1rem;
+  background:rgba(255,255,255,0.1); color:white; outline:none;
+}
+input[type="text"]::placeholder { color:#888; }
+input[type="text"]:focus { background:rgba(255,255,255,0.15); }
+.btn-player { width:100%; padding:1rem; border-radius:10px; border:none; font-size:1.1rem; font-weight:700; cursor:pointer; background:#e94560; color:white; margin-top:0.5rem; }
+.btn-player:hover { background:#ff6b6b; }
+.error-msg { color:#ff6b6b; font-size:0.9rem; margin-top:0.5rem; min-height:1.2rem; }
+.waiting-msg { text-align:center; font-size:1.2rem; color:#b8c5d6; }
+.waiting-msg .pin-big { font-size:3rem; font-weight:900; color:#ff6b6b; display:block; margin:0.5rem 0; }
+.question-player { width:100%; max-width:500px; text-align:center; }
+.question-player h2 { font-size:1.6rem; margin-bottom:1.5rem; line-height:1.4; }
+.choices-player { display:flex; flex-direction:column; gap:0.8rem; }
+.choice-btn-player {
+  display:flex; align-items:center; gap:1rem;
+  width:100%; padding:1.2rem 1.5rem;
+  border-radius:14px; border:none; font-size:1.2rem; font-weight:700;
+  cursor:pointer; transition:transform 0.15s; color:white; text-align:left;
+}
+.choice-btn-player:hover:not(:disabled) { transform:scale(1.03); }
+.choice-btn-player:disabled { opacity:0.5; cursor:default; }
+.choice-shape-player {
+  width:42px; height:42px; border-radius:10px; display:flex;
+  align-items:center; justify-content:center; font-size:1.3rem; font-weight:900;
+  flex-shrink:0; background:rgba(0,0,0,0.2);
+}
+.result-screen { text-align:center; padding:2rem 1rem; }
+.result-screen .big-icon { font-size:4rem; margin-bottom:1rem; }
+.result-screen h2 { font-size:2rem; margin:0 0 0.5rem; }
+.result-screen .score-text { font-size:1.2rem; color:#b8c5d6; }
+.result-screen .rank-text { font-size:1.5rem; font-weight:700; color:#ff6b6b; margin-top:1rem; }
+.ended-screen { text-align:center; padding:2rem 1rem; }
+.ended-screen h2 { font-size:2rem; margin-bottom:1rem; }
+.final-rank { font-size:3rem; font-weight:900; color:#e94560; margin:1rem 0; }
+.kicked-screen { text-align:center; color:#ff6b6b; }
+.top-bar {
+  position:fixed; top:0; left:0; right:0; padding:0.8rem 1rem;
+  background:rgba(26,26,46,0.9); backdrop-filter:blur(10px);
+  display:flex; justify-content:space-between; align-items:center;
+  z-index:100; border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.top-bar .logo { font-weight:900; font-size:1.2rem; color:#ff6b6b; }
+.top-bar .score { font-weight:700; color:#16c79a; }
+</style>
+</head>
+<body>
+<div class="player-bg" id="app">
+
+  <!-- Join Screen -->
+  <div id="joinScreen">
+    <div class="join-box">
+      <h1>SAHOOT</h1>
+      <p>Enter the game PIN from your host</p>
+      <div class="input-group">
+        <label>Game PIN</label>
+        <input type="text" id="pinInput" placeholder="123456" maxlength="6" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label>Nickname</label>
+        <input type="text" id="nameInput" placeholder="Your name" maxlength="20">
+      </div>
+      <button class="btn-player" id="btnJoin">Join Game</button>
+      <div class="error-msg" id="joinError"></div>
+    </div>
+  </div>
+
+  <!-- Waiting Screen -->
+  <div id="waitingScreen" style="display:none;">
+    <div class="waiting-msg">
+      <p>Waiting for host to start...</p>
+      <span class="pin-big" id="myPin"></span>
+      <p style="color:#b8c5d6;">You are <strong id="myName"></strong></p>
+    </div>
+  </div>
+
+  <!-- Question Screen -->
+  <div id="questionScreen" style="display:none;">
+    <div class="question-player">
+      <div class="timer-bar"><div class="timer-bar-inner" id="timerBarPlayer"></div></div>
+      <h2 id="qTextPlayer"></h2>
+      <div class="choices-player" id="qChoicesPlayer"></div>
+    </div>
+  </div>
+
+  <!-- Answer Submitted -->
+  <div id="answerWaitScreen" style="display:none;">
+    <div class="waiting-msg">
+      <p>Answer locked in!</p>
+      <p style="color:#b8c5d6;">Waiting for others...</p>
+    </div>
+  </div>
+
+  <!-- Round Result -->
+  <div id="resultScreen" style="display:none;">
+    <div class="result-screen">
+      <div class="big-icon" id="resultIcon"></div>
+      <h2 id="resultTitle"></h2>
+      <div class="score-text" id="resultScore"></div>
+      <div class="rank-text" id="resultRank"></div>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="endedScreen" style="display:none;">
+    <div class="ended-screen">
+      <h2>Game Over!</h2>
+      <div class="final-rank" id="finalRank"></div>
+      <p id="finalScore"></p>
+      <button class="btn-player" onclick="location.reload()" style="margin-top:2rem;">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Kicked -->
+  <div id="kickedScreen" style="display:none;">
+    <div class="kicked-screen">
+      <h2>You were removed from the game.</h2>
+      <button class="btn-player" onclick="location.reload()" style="margin-top:1rem;">Back to Join</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let myPin = '';
+let myName = '';
+let myScore = 0;
+
+function showScreen(id) {
+  const screens = ['joinScreen','waitingScreen','questionScreen','answerWaitScreen','resultScreen','endedScreen','kickedScreen'];
+  screens.forEach(s => document.getElementById(s).style.display = (s === id ? 'block' : 'none'));
+}
+
+function startTimerPlayer(seconds) {
+  const bar = document.getElementById('timerBarPlayer');
+  bar.style.width = '100%';
+  bar.style.transition = 'none';
+  setTimeout(() => {
+    bar.style.transition = 'width ' + seconds + 's linear';
+    bar.style.width = '0%';
+  }, 50);
+}
+
+// Join
+document.getElementById('btnJoin').addEventListener('click', () => {
+  const pin = document.getElementById('pinInput').value.trim();
+  const name = document.getElementById('nameInput').value.trim();
+  if (!pin || pin.length < 4) {
+    document.getElementById('joinError').textContent = 'Enter a valid PIN.';
+    return;
+  }
+  if (!name || name.length < 2) {
+    document.getElementById('joinError').textContent = 'Enter a nickname (2+ chars).';
+    return;
+  }
+  myPin = pin;
+  myName = name;
+  socket.emit('joinRoom', { pin, name });
+});
+
+// Enter key support
+document.getElementById('nameInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') document.getElementById('btnJoin').click();
+});
+
+socket.on('joined', ({ pin, quizTitle }) => {
+  showScreen('waitingScreen');
+  document.getElementById('myPin').textContent = pin;
+  document.getElementById('myName').textContent = myName;
+});
+
+socket.on('joinError', (msg) => {
+  document.getElementById('joinError').textContent = msg;
+});
+
+socket.on('question', ({ text, choices, timeLimit }) => {
+  showScreen('questionScreen');
+  document.getElementById('qTextPlayer').textContent = text;
+  const el = document.getElementById('qChoicesPlayer');
+  el.innerHTML = '';
+  const colors = ['red','blue','green','yellow'];
+  const shapes = ['&#9632;','&#9670;','&#9671;','&#9672;'];
+  choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn-player ' + colors[i];
+    btn.innerHTML = '<span class="choice-shape-player">' + shapes[i] + '</span>' + c.text;
+    btn.onclick = () => {
+      socket.emit('answer', { choiceIndex: i });
+      Array.from(el.children).forEach(b => b.disabled = true);
+      showScreen('answerWaitScreen');
+    };
+    el.appendChild(btn);
+  });
+  startTimerPlayer(timeLimit);
+});
+
+socket.on('answerAck', () => {
+  // Handled by moving to answerWaitScreen immediately
+});
+
+socket.on('personalResult', ({ isCorrect, points, totalScore, rank }) => {
+  showScreen('resultScreen');
+  const icon = isCorrect ? '&#127881;' : '&#128542;';
+  const title = isCorrect ? 'Correct!' : 'Wrong!';
+  const color = isCorrect ? '#16c79a' : '#e94560';
+  document.getElementById('resultIcon').innerHTML = icon;
+  document.getElementById('resultIcon').style.color = color;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultTitle').style.color = color;
+  document.getElementById('resultScore').textContent = (isCorrect ? '+' : '') + points + ' points | Total: ' + totalScore;
+  document.getElementById('resultRank').textContent = 'Rank #' + rank;
+  myScore = totalScore;
+});
+
+socket.on('gameEnded', ({ podium }) => {
+  showScreen('endedScreen');
+  const myEntry = podium.find(p => p.name === myName);
+  const rank = myEntry ? (podium.indexOf(myEntry) + 1) : '?';
+  document.getElementById('finalRank').textContent = '#' + rank;
+  document.getElementById('finalScore').textContent = myEntry ? myEntry.score + ' points' : '';
+});
+
+socket.on('kicked', () => {
+  showScreen('kickedScreen');
+});
+
+socket.on('hostLeft', () => {
+  alert('Host left the game.');
+  location.reload();
+});
+</script>
+</body>
+</html>
