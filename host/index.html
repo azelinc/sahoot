@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahoot - Host</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.host-bg { min-height:100vh; padding:2rem; background:#1a1a2e; color:white; }
+.host-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+.host-header h1 { margin:0; font-size:2rem; }
+.pin-box { background:rgba(255,255,255,0.07); border-radius:16px; padding:2rem; text-align:center; margin-bottom:2rem; border:1px solid rgba(255,255,255,0.1); }
+.pin-box h2 { margin:0 0 0.5rem; color:#b8c5d6; font-size:1rem; text-transform:uppercase; letter-spacing:0.1em; }
+.players-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.8rem; }
+.player-chip { background:rgba(255,255,255,0.1); border-radius:12px; padding:0.8rem 1rem; text-align:center; font-weight:600; font-size:0.95rem; animation:popIn 0.3s ease-out; }
+.question-host { text-align:center; padding:3rem 1rem; }
+.question-host h2 { font-size:2.5rem; margin-bottom:2rem; }
+.choices-host { display:grid; grid-template-columns:1fr 1fr; gap:1rem; max-width:700px; margin:0 auto; }
+.choice-host { padding:1.5rem; border-radius:12px; font-size:1.3rem; font-weight:700; text-align:center; }
+.leaderboard-host { max-width:600px; margin:0 auto; }
+.leaderboard-row { display:flex; align-items:center; gap:1rem; padding:0.8rem 1rem; margin:0.4rem 0; background:rgba(255,255,255,0.07); border-radius:10px; }
+.leaderboard-rank { width:40px; text-align:center; font-weight:900; font-size:1.2rem; color:#ff6b6b; }
+.leaderboard-name { flex:1; font-weight:700; }
+.leaderboard-points { font-weight:700; color:#16c79a; }
+.leaderboard-correct { color:#16c79a; }
+.leaderboard-wrong { color:#e94560; }
+.host-controls { display:flex; gap:1rem; justify-content:center; margin-top:2rem; flex-wrap:wrap; }
+.btn-host { background:#e94560; color:white; padding:1rem 2.5rem; font-size:1.1rem; border-radius:12px; border:none; cursor:pointer; font-weight:700; }
+.btn-host:hover { background:#ff6b6b; }
+.btn-host-secondary { background:rgba(255,255,255,0.15); color:white; }
+.btn-host-secondary:hover { background:rgba(255,255,255,0.25); }
+.waiting-players { text-align:center; margin-top:2rem; }
+.waiting-players h3 { color:#b8c5d6; margin-bottom:1rem; }
+.podium-screen { text-align:center; padding:2rem; }
+.podium-screen h2 { font-size:2.5rem; margin-bottom:1rem; }
+.q-counter { text-align:center; color:#b8c5d6; font-size:1rem; margin-bottom:1rem; }
+.correct-answer-highlight { border:3px solid #16c79a !important; box-shadow:0 0 20px rgba(22,199,154,0.4); }
+.results-summary { text-align:center; margin:1rem 0; color:#b8c5d6; }
+</style>
+</head>
+<body>
+<div class="host-bg" id="app">
+  <div class="host-header">
+    <h1>SAHOOT Host</h1>
+    <div id="status"><span class="status-badge status-waiting">Waiting</span></div>
+  </div>
+
+  <div id="waitingScreen">
+    <div class="pin-box">
+      <h2>Game PIN</h2>
+      <div class="pin-display" id="pinDisplay">------</div>
+      <p style="color:#b8c5d6;margin-top:0.5rem;">Go to sahoot.it and enter this PIN</p>
+    </div>
+    <div class="waiting-players">
+      <h3>Players (<span id="playerCount">0</span>)</h3>
+      <div class="players-grid" id="playersGrid"></div>
+    </div>
+    <div class="host-controls">
+      <button class="btn-host" id="btnStart">Start Game</button>
+    </div>
+  </div>
+
+  <div id="questionScreen" style="display:none;">
+    <div class="q-counter" id="qCounter">Question 1 of 10</div>
+    <div class="question-host">
+      <h2 id="qText">Question text here</h2>
+      <div class="timer-bar"><div class="timer-bar-inner" id="timerBar"></div></div>
+      <div class="choices-host" id="qChoices"></div>
+    </div>
+  </div>
+
+  <div id="leaderboardScreen" style="display:none;">
+    <div class="leaderboard-host" id="leaderboardContainer"></div>
+    <div class="results-summary" id="resultsSummary"></div>
+    <div class="host-controls">
+      <button class="btn-host" id="btnNext">Next Question</button>
+    </div>
+  </div>
+
+  <div id="podiumScreen" style="display:none;">
+    <div class="podium-screen">
+      <h2>Game Over!</h2>
+      <div class="podium" id="podium"></div>
+      <div class="host-controls">
+        <button class="btn-host btn-host-secondary" onclick="location.reload()">Host New Game</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
+<script>
+const socket = io(window.SAHOOT_BACKEND || window.location.origin);
+let currentPin = '';
+let timerInterval = null;
+
+function showScreen(id) {
+  ['waitingScreen','questionScreen','leaderboardScreen','podiumScreen'].forEach(s => {
+    document.getElementById(s).style.display = (s === id ? 'block' : 'none');
+  });
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById('status');
+  el.innerHTML = '<span class="status-badge ' + cls + '">' + text + '</span>';
+}
+
+function updatePlayerList(list) {
+  document.getElementById('playerCount').textContent = list.length;
+  const grid = document.getElementById('playersGrid');
+  grid.innerHTML = '';
+  list.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'player-chip';
+    div.textContent = p.name;
+    grid.appendChild(div);
+  });
+}
+
+function startTimer(seconds) {
+  const bar = document.getElementById('timerBar');
+  bar.style.width = '100%';
+  bar.style.transition = 'none';
+  setTimeout(() => {
+    bar.style.transition = 'width ' + seconds + 's linear';
+    bar.style.width = '0%';
+  }, 50);
+}
+
+function stopTimer() {
+  const bar = document.getElementById('timerBar');
+  const computed = getComputedStyle(bar);
+  const w = computed.width;
+  bar.style.transition = 'none';
+  bar.style.width = w;
+}
+
+// Create room on load
+socket.emit('createRoom');
+
+socket.on('roomCreated', ({ pin }) => {
+  currentPin = pin;
+  document.getElementById('pinDisplay').textContent = pin;
+});
+
+socket.on('playerList', (list) => {
+  updatePlayerList(list);
+});
+
+socket.on('question', ({ index, total, text, choices, timeLimit }) => {
+  showScreen('questionScreen');
+  setStatus('LIVE', 'status-live');
+  document.getElementById('qCounter').textContent = 'Question ' + (index + 1) + ' of ' + total;
+  document.getElementById('qText').textContent = text;
+  const choicesEl = document.getElementById('qChoices');
+  choicesEl.innerHTML = '';
+  const colors = ['red', 'blue', 'green', 'yellow'];
+  choices.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'choice-host ' + colors[i];
+    div.innerHTML = '<span style="display:inline-block;margin-right:8px;font-size:1.5rem;">' + ['&#9670;', '&#9671;', '&#9672;', '&#9673;'][i] + '</span>' + c.text;
+    div.dataset.index = i;
+    choicesEl.appendChild(div);
+  });
+  startTimer(timeLimit);
+});
+
+socket.on('leaderboard', ({ results, correctIndex, correctCount, totalPlayers }) => {
+  showScreen('leaderboardScreen');
+  stopTimer();
+  const container = document.getElementById('leaderboardContainer');
+  container.innerHTML = '';
+  results.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'leaderboard-row animate-slide';
+    row.style.animationDelay = (i * 0.08) + 's';
+    const correctClass = r.isCorrect ? 'leaderboard-correct' : 'leaderboard-wrong';
+    const icon = r.isCorrect ? '&#10003;' : '&#10007;';
+    row.innerHTML = '<div class="leaderboard-rank">' + (i + 1) + '</div>' +
+      '<div class="leaderboard-name">' + r.name + '</div>' +
+      '<div class="leaderboard-points ' + correctClass + '">' + icon + ' +' + r.points + ' &rarr; ' + r.totalScore + '</div>';
+    container.appendChild(row);
+  });
+  document.getElementById('resultsSummary').textContent = correctCount + ' / ' + totalPlayers + ' answered correctly';
+
+  // Highlight correct answer
+  const choices = document.querySelectorAll('#qChoices .choice-host');
+  if (choices[correctIndex]) {
+    choices[correctIndex].classList.add('correct-answer-highlight');
+  }
+});
+
+socket.on('gameEnded', ({ podium }) => {
+  showScreen('podiumScreen');
+  setStatus('FINISHED', 'status-waiting');
+  const el = document.getElementById('podium');
+  el.innerHTML = '';
+  const medals = ['&#129351;', '&#129352;', '&#129353;'];
+  podium.slice(0, 3).forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'podium-item podium-' + (i + 1);
+    div.innerHTML = '<div class="podium-rank">' + medals[i] + '</div>' +
+      '<div class="podium-name">' + p.name + '</div>' +
+      '<div class="podium-score">' + p.score + ' pts</div>';
+    el.appendChild(div);
+  });
+  // Also show rest of top 10
+  podium.slice(3).forEach((p, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'text-align:center;padding:0.6rem;color:#b8c5d6;';
+    div.textContent = (i + 4) + '. ' + p.name + ' - ' + p.score + ' pts';
+    el.appendChild(div);
+  });
+});
+
+document.getElementById('btnStart').addEventListener('click', () => {
+  socket.emit('startGame');
+});
+
+document.getElementById('btnNext').addEventListener('click', () => {
+  socket.emit('nextQuestion');
+});
+</script>
+</body>
+</html>

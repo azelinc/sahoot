@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sahoot - Live Quiz Competition</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif;
+background:linear-gradient(135deg,#1a1a2e,#0f3460);color:white;min-height:100vh;
+display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+h1{font-size:4rem;margin:0 0 1rem;background:linear-gradient(90deg,#e94560,#ff6b6b);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+p{font-size:1.2rem;color:#b8c5d6;margin-bottom:2rem;max-width:500px}
+.btn{display:inline-block;padding:1rem 2.5rem;border-radius:12px;font-size:1.1rem;
+font-weight:700;text-decoration:none;transition:transform .2s,box-shadow .2s;cursor:pointer;border:none;margin:.5rem}
+.btn:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,.3)}
+.primary{background:linear-gradient(90deg,#e94560,#ff6b6b);color:white}
+.secondary{background:rgba(255,255,255,.15);color:white}
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:3rem;max-width:600px;width:100%}
+.feature{background:rgba(255,255,255,.07);border-radius:16px;padding:1.5rem;backdrop-filter:blur(10px)}
+.feature h3{color:#ff6b6b;margin:0 0 .5rem;font-size:1rem;text-transform:uppercase;letter-spacing:.05em}
+.feature p{margin:0;font-size:.9rem;color:#b8c5d6}
+.btn-small{padding:.6rem 1.2rem!important;font-size:.9rem!important}
+input[type="text"]{padding:1rem;border-radius:10px;border:none;font-size:1rem;width:280px;background:rgba(255,255,255,.1);color:white;margin:.3rem}
+input::placeholder{color:#888}
+.footer{margin-top:3rem;color:#666;font-size:.85rem}
+a{color:#ff6b6b}
+</style>
+</head>
+<body>
+<h1>SAHOOT</h1>
+<p>Live quiz competition for seminars, forums & events. No login — just a PIN and a phone.</p>
+<div>
+<a class="btn primary" href="host/index.html">Host a Game</a>
+<a class="btn secondary" href="player/index.html">Join a Game</a>
+</div>
+<div class="features">
+<div class="feature"><h3>Real-time</h3><p>Socket.IO powered instant sync</p></div>
+<div class="feature"><h3>Speed Scoring</h3><p>Faster answers = more points</p></div>
+<div class="feature"><h3>Live Leaderboard</h3><p>Ranking after every question</p></div>
+<div class="feature"><h3>Zero Setup</h3><p>One-click host, 6-digit PIN join</p></div>
+</div>
+<div style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.5);border-radius:16px;padding:1.5rem;margin-top:2.5rem;max-width:560px;width:100%">
+<strong style="color:#ffc107">Backend Required</strong>
+<p style="margin:.5rem 0;color:#b8c5d6;font-size:.95rem">
+You need a backend server for real-time multiplayer.
+Enter your backend URL below, or deploy with one command (see <a href="https://github.com/azelinc/sahoot/blob/master/DEPLOY.md">DEPLOY.md</a>).
+</p>
+<input type="text" id="backendUrl" placeholder="https://sahoot.azly.my" value=""><br>
+<a class="btn btn-small primary" href="#" onclick="saveBackend();return false;">Save</a>
+<a class="btn btn-small secondary" href="https://github.com/azelinc/sahoot">View on GitHub</a>
+</div>
+<div class="footer">Open source on <a href="https://github.com/azelinc/sahoot">GitHub</a></div>
+<script>function saveBackend(){var u=document.getElementById('backendUrl').value.trim();if(!u){alert('Enter a URL');return}localStorage.setItem('SAHOOT_BACKEND',u);alert('Saved: '+u+'\nNow open Host or Player.');}window.SAHOOT_BACKEND=localStorage.getItem('SAHOOT_BACKEND')||'';</script>
+</body>
+</html>
