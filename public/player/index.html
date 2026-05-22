@@ -140,7 +140,7 @@ input[type="text"]:focus { background:rgba(255,255,255,0.15); }
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io();
+const socket = io(typeof window !== "undefined" && window.SAHOOT_BACKEND || window.location.origin);
 let myPin = '';
 let myName = '';
 let myScore = 0;

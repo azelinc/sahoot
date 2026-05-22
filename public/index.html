@@ -36,6 +36,24 @@
 .feature h3 {margin:0 0 0.5rem;color:#ff6b6b;font-size:1.1rem;}
 .feature p {margin:0;font-size:0.95rem;color:#b8c5d6;}
 </style>
+
+  <script>
+    // Load backend config
+    async function loadConfig() {
+      try {
+        const r = await fetch('/config.json');
+        const c = await r.json();
+        window.SAHOOT_BACKEND = localStorage.getItem('SAHOOT_BACKEND') || c.backendUrl || '';
+      } catch(e) { window.SAHOOT_BACKEND = localStorage.getItem('SAHOOT_BACKEND') || ''; }
+      if (!window.SAHOOT_BACKEND) {
+        const host = window.location.host;
+        if (host.includes('github.io')) {
+          document.getElementById('backendNotice').style.display = 'block';
+        }
+      }
+    }
+    loadConfig();
+  </script>
 </head>
 <body>
 <div class="landing">

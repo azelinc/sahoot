@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  sahoot:
+    build: .
+    container_name: sahoot
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    networks:
+      - sahoot-net
+
+networks:
+  sahoot-net:
+    driver: bridge
